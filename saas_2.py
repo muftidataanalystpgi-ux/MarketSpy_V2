@@ -171,13 +171,17 @@ async def run_google_maps_scraper(keyword, status_ui):
                 nama_el = await page.query_selector('h1')
                 nama = clean_text(await nama_el.inner_text()) if nama_el else "Tanpa Nama"
                 
-                rating = "N/A"
-                rating_el = await page.query_selector('span[aria-label*="bintang"], span[aria-label*="stars"]')
-                if rating_el: 
-                    rating = await rating_el.get_attribute('aria-label')
-                else:
-                    rating_check = await page.query_selector('div.F7nice')
-                    if rating_check: rating = (await rating_check.inner_text()).replace("\n", " ")
+                rating_el = await page.query_selector('span[aria-label*="bintang"], span[aria-label*="star"], div.F7nice')
+                if rating_el:
+                    aria_label = await rating_el.get_attribute('aria-label')
+                    if aria_label:
+                        # Mengambil angka desimal (contoh: 4.5) langsung dari teks aria-label
+                        match = re.search(r'([0-9.,]+)', aria_label)
+                        rating = match.group(1) if match else aria_label
+                    else:
+                        text_content = await rating_el.inner_text()
+                        match = re.search(r'([0-9.,]+)', text_content)
+                        rating = match.group(1) if match else text_content
                 
                 alamat = "Tidak terdeteksi"
                 address_el = await page.query_selector('button[data-item-id="address"]')
